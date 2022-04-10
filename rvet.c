@@ -26,7 +26,7 @@ void Event(int pid, Clock *clock){
 
 void Send(int pid, int pidR,  Clock *clock){
    clock->p[pid]++;
-   MPI_Send(clock->p,3,MPI_INT,0,pidR,MPI_COMM_WORLD);
+   MPI_Send(clock->p,3,MPI_INT,pidR,0,MPI_COMM_WORLD);
 }
 
 void Receive(int pid, int pidS,  Clock *clock){
