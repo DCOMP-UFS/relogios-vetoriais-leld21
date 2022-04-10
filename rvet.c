@@ -24,22 +24,46 @@ void Event(int pid, Clock *clock){
 }
 
 
-void Send(int pid, Clock *clock){
-   // TO DO
+void Send(int pid, int pidR,  Clock *clock){
+   clock->p[pid]++;
+   MPI_Send(clock->p,3,MPI_INT,0,pidR,MPI_COMM_WORLD);
 }
 
-void Receive(int pid, Clock *clock){
-   // TO DO
-
+void Receive(int pid, int pidS,  Clock *clock){
+   int antigo0 = clock->p[0];
+   int antigo1 = clock->p[1];
+   int antigo2 = clock->p[2];
+   MPI_Recv(clock->p, 3, MPI_INT, pidS, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+   if(clock->p[0]<=antigo0){
+      clock->p[0]=antigo0;
+   }
+   if(clock->p[1]<=antigo1){
+      clock->p[1]=antigo1;
+   }
+   if(clock->p[2]<=antigo2){
+      clock->p[2]=antigo2;
+   }
+   clock->p[pid]++;
 }
 
 // Representa o processo de rank 0
 void process0(){
    Clock clock = {{0,0,0}};
+   printf("Process: %d, Clock: (%d, %d, %d)\n", 0, clock.p[0], clock.p[1], clock.p[2]);
    Event(0, &clock);
    printf("Process: %d, Clock: (%d, %d, %d)\n", 0, clock.p[0], clock.p[1], clock.p[2]);
-
-   // TO DO
+   Send(0,1,&clock);
+   printf("Process: %d, Clock: (%d, %d, %d)\n", 0, clock.p[0], clock.p[1], clock.p[2]);
+   Receive(0,1,&clock);
+   printf("Process: %d, Clock: (%d, %d, %d)\n", 0, clock.p[0], clock.p[1], clock.p[2]);
+   Send(0,2,&clock);
+   printf("Process: %d, Clock: (%d, %d, %d)\n", 0, clock.p[0], clock.p[1], clock.p[2]);
+   Receive(0,2,&clock);
+   printf("Process: %d, Clock: (%d, %d, %d)\n", 0, clock.p[0], clock.p[1], clock.p[2]);
+   Send(0,1,&clock);
+   printf("Process: %d, Clock: (%d, %d, %d)\n", 0, clock.p[0], clock.p[1], clock.p[2]);
+   Event(0, &clock);
+   printf("Process: %d, Clock: (%d, %d, %d)\n", 0, clock.p[0], clock.p[1], clock.p[2]);
 
 }
 
@@ -47,16 +71,24 @@ void process0(){
 void process1(){
    Clock clock = {{0,0,0}};
    printf("Process: %d, Clock: (%d, %d, %d)\n", 1, clock.p[0], clock.p[1], clock.p[2]);
-
-   // TO DO
+   Send(1,0,&clock);
+   printf("Process: %d, Clock: (%d, %d, %d)\n", 1, clock.p[0], clock.p[1], clock.p[2]);
+   Receive(1,0,&clock);
+   printf("Process: %d, Clock: (%d, %d, %d)\n", 1, clock.p[0], clock.p[1], clock.p[2]);
+   Receive(1,0,&clock);
+   printf("Process: %d, Clock: (%d, %d, %d)\n", 1, clock.p[0], clock.p[1], clock.p[2]);
 }
 
 // Representa o processo de rank 2
 void process2(){
    Clock clock = {{0,0,0}};
    printf("Process: %d, Clock: (%d, %d, %d)\n", 2, clock.p[0], clock.p[1], clock.p[2]);
-   
-   // TO DO
+   Event(2, &clock);
+   printf("Process: %d, Clock: (%d, %d, %d)\n", 2, clock.p[0], clock.p[1], clock.p[2]);
+   Send(2,0,&clock);
+   printf("Process: %d, Clock: (%d, %d, %d)\n", 2, clock.p[0], clock.p[1], clock.p[2]);
+   Receive(2,0,&clock);
+   printf("Process: %d, Clock: (%d, %d, %d)\n", 2, clock.p[0], clock.p[1], clock.p[2]);
 }
 
 int main(void) {
