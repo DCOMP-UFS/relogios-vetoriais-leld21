@@ -28,12 +28,57 @@ void Send(int pid, int pidR,  Clock *clock){
    clock->p[pid]++;
    MPI_Send(clock->p,3,MPI_INT,pidR,0,MPI_COMM_WORLD);
 }
+void comparaClocks(Clock *clock,int p0, int p1, int p2 )
+{
+   /*
+     if (p0 == 0)
+    {
+        if (clock->p[1] >= p0)
+            clock->p[1] = p0;
+
+        if (clock->p[2] >= p0)
+            clock->p[2] = p0;
+    }
+    else if (p1 == 1)
+    {
+        if (clock->p[0] >=p1)
+            clock->p[0] = p1;
+
+        if (clock->p[2] >= p1)
+            clock->p[2] = p1;
+    }
+    else if (p2 == 2)
+    {
+        if (clock->p[0] >= p2)
+            clock->p[0] = p2;
+
+        if (clock->p[1] >= p2)
+            clock->p[1] = p2;
+    }
+   */
+   
+   if(clock->p[0]<=p0){
+      clock->p[0]=p0;
+   }
+   if(clock->p[1]<=p1){
+      clock->p[1]=p1;
+   }
+   if(clock->p[2]<=p2){
+      clock->p[2]=p2;
+   }
+   
+}
 
 void Receive(int pid, int pidS,  Clock *clock){
    int antigo0 = clock->p[0];
    int antigo1 = clock->p[1];
    int antigo2 = clock->p[2];
+   
+
+
    MPI_Recv(clock->p, 3, MPI_INT, pidS, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+   
+   /*
    if(clock->p[0]<=antigo0){
       clock->p[0]=antigo0;
    }
@@ -43,6 +88,8 @@ void Receive(int pid, int pidS,  Clock *clock){
    if(clock->p[2]<=antigo2){
       clock->p[2]=antigo2;
    }
+  */
+   comparaClocks(clock,antigo0,antigo1,antigo2);
    clock->p[pid]++;
 }
 
