@@ -5,7 +5,7 @@
 #include <stdbool.h>
 
 
-#define MAX 100
+#define MAX 10
 
 typedef struct 
 {
@@ -23,48 +23,84 @@ typedef struct
 } fila;
 
 
-void inicializar(fila *q)
+void inicializar(fila *f)
 {
-    q->inicio = 0;
-    q->fim = -1;
-    q->tam = 0;
+    f->inicio = 0;
+    f->fim = -1;
+    f->tam = 0;
 }
 
 
-int tam(fila *q)
+int tam(fila *f)
 {
-    return q->tam;
-}
-
-bool cheia(fila *q)
-{
-    return tam(q) == MAX;
+    return f->tam;
 }
 
 
 
-bool inserir(CLOCK clock, fila *q)
+bool cheia(fila *f)
+{
+    return tam(f) == MAX;
+}
+
+bool vazia (fila *f)
+{
+    return tam(f) == 0;
+}
+
+
+
+bool inserir(CLOCK clock, fila *f)
 {
     
-    pthread_mutex_lock(&mutex);
-    while(cheia(q))
+    //(&mutex);
+    //sem_init(&semaphore, 0, 1);
+    while(cheia(f))
     {
-        pthread_cond_wait(&condFull, &mutex);
+        printf("cheio");
     }
     
-    q->fim = (q->fim + 1) % MAX;
-    q->clocks[q->fim] = clock;
-    q->tam++;
+    f->fim = (f->fim + 1) % MAX;
+    f->clocks[f->fim] = clock;
+    f->tam++;
     
-    pthread_mutex_unlock(&mutex);
-    pthread_cond_signal(&condEmpty);
+
     return true;
+}
+
+
+
+CLOCK retirar(fila *f)
+{
+    CLOCK c;
+
+    while(vazia(f))
+    {
+        printf("vazio");
+        
+    }
+    
+    c = f->clocks[f->inicio];
+    f->inicio = (f->inicio + 1) % MAX;
+    f->tam--;
+    
+    
+    return c;
 }
 
 
 
 void imprimir(fila *q)
 {
-    printf("tamam = %d\n", tam(q));
-    
+    printf("tam = %d\n", tam(q));
+
+}
+
+int main(void)
+{
+  fila f;
+  inicializar(&f);
+  
+  
+
 }

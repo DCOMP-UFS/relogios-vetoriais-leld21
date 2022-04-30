@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <string.h>  
 #include <mpi.h>     
+#include "queue.c"
 
 
 typedef struct Clock { 
@@ -96,6 +97,10 @@ void Receive(int pid, int pidS,  Clock *clock){
 // Representa o processo de rank 0
 void process0(){
    Clock clock = {{0,0,0}};
+   
+   inicializar(clock);
+   inserir(clock,3);
+   /*
    printf("Process: %d, Clock: (%d, %d, %d)\n", 0, clock.p[0], clock.p[1], clock.p[2]);
    Event(0, &clock);
    printf("Process: %d, Clock: (%d, %d, %d)\n", 0, clock.p[0], clock.p[1], clock.p[2]);
@@ -111,7 +116,7 @@ void process0(){
    printf("Process: %d, Clock: (%d, %d, %d)\n", 0, clock.p[0], clock.p[1], clock.p[2]);
    Event(0, &clock);
    printf("Process: %d, Clock: (%d, %d, %d)\n", 0, clock.p[0], clock.p[1], clock.p[2]);
-
+   */
 }
 
 // Representa o processo de rank 1
