@@ -3,20 +3,24 @@
 #include <string.h>
 #include <pthread.h>
 #include <stdbool.h>
+#include <semaphore.h>
 
 
-#define MAX 10
+sem_t seminserir;
+sem_t semretirar;
+
+#define MAX 2
 
 typedef struct 
 {
-    int pid;
-    int destination;
+    //int pid;
+    //int destination;
     int p[3];
-} CLOCK;
+} Clock;
 
 typedef struct
 {
-   CLOCK clocks[MAX];
+   Clock clocks[MAX];
    int inicio;
    int fim;
    int tam;
@@ -25,7 +29,7 @@ typedef struct
 
 void inicializar(fila *f)
 {
-    f->inicio = 0;
+    f->inicio = -1;
     f->fim = -1;
     f->tam = 0;
 }
@@ -50,42 +54,52 @@ bool vazia (fila *f)
 
 
 
-bool inserir(CLOCK clock, fila *f)
+bool inserir(Clock clock, fila *f)
 {
     
-    //(&mutex);
-    //sem_init(&semaphore, 0, 1);
-    while(cheia(f))
-    {
-        printf("cheio");
-    }
-    
-    f->fim = (f->fim + 1) % MAX;
-    f->clocks[f->fim] = clock;
-    f->tam++;
-    
 
+    if(cheia(f))
+    {
+        printf("Fila cheia");
+        sem_wait(&semretirar);
+    }if (vazia(f))
+    {
+        f->fim = (f->fim + 1) % MAX;
+        f->clocks[f->fim] = clock;
+        f->tam++;
+        sem_post(&seminserir);
+        }else
+        f->fim = (f->fim + 1) % MAX;
+        f->clocks[f->fim] = clock;
+        f->tam++;
+                
     return true;
 }
 
 
 
-CLOCK retirar(fila *f)
+void retirar(fila *f)
 {
-    CLOCK c;
+    //Clock c;
 
-    while(vazia(f))
+    if(vazia(f))
     {
-        printf("vazio");
+        printf("Fila Vazia");
+        sem_wait(&seminserir);
         
-    }
+    }if(cheia(f))
+        {
+        //c = f->clocks[f->inicio];
+        f->inicio = (f->inicio + 1) % MAX;
+        f->tam--;
+        sem_post(&semretirar);
+        }else
+        printf("Process: %d, Clock: (%d, %d, %d)\n", 2, f->clocks[f->inicio].p[0], f->clocks[f->inicio].p[1], f->clocks[f->inicio].p[2]);
+        //c = f->clocks[f->inicio];
+        f->inicio = (f->inicio + 1) % MAX;
+        f->tam--;
     
-    c = f->clocks[f->inicio];
-    f->inicio = (f->inicio + 1) % MAX;
-    f->tam--;
-    
-    
-    return c;
+    //return c;
 }
 
 
@@ -98,9 +112,14 @@ void imprimir(fila *q)
 
 int main(void)
 {
+    
+  sem_init(&seminserir, 0, 0);
+  sem_init(&semretirar, 0, 0);
+ 
   fila f;
   inicializar(&f);
-  
+  retirar(&f);
+
   
 
 }
