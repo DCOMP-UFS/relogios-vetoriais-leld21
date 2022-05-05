@@ -9,18 +9,41 @@
  * Execução:   mpiexec -n 3 ./rvet
  */
  
-#include <stdio.h>  
+#include <stdio.h>
 #include <string.h>  
 #include <mpi.h>     
+#include "sem.c"
+#include <string.h>
+#include <pthread.h>
+#include <stdbool.h>
+#include <semaphore.h>
 
 
+/*
 typedef struct Clock { 
    int p[3];
 } Clock;
 
+*/
+void Event(int pid, fila *f){
+   f->clocks[f->inicio].p[pid]++;
+}
 
-void Event(int pid, Clock *clock){
-   clock->p[pid]++;   
+void *Emissor (void* f){
+   Event((fila*)f);
+   Clock c = retirar((fila*)f);
+   MPI_Send(c.p,3,MPI_INT,c.destination,0,MPI_COMM_WORLD);
+}
+
+void *Receptor (void* f){
+   //ainda ta igual ao receive, ainda n sei como fazer, so que tem que colocar um inserir ai no meio.
+   int antigo0 = clock->p[0];
+   int antigo1 = clock->p[1];
+   int antigo2 = clock->p[2];
+   
+   MPI_Recv(clock->p, 3, MPI_INT, pidS, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+   comparaClocks(clock,antigo0,antigo1,antigo2);
+   clock->p[pid]++;
 }
 
 
@@ -28,6 +51,7 @@ void Send(int pid, int pidR,  Clock *clock){
    clock->p[pid]++;
    MPI_Send(clock->p,3,MPI_INT,pidR,0,MPI_COMM_WORLD);
 }
+
 void comparaClocks(Clock *clock,int p0, int p1, int p2 )
 {
    /*
@@ -94,15 +118,37 @@ void Receive(int pid, int pidS,  Clock *clock){
 }
 
 // Representa o processo de rank 0
-void process0(){
-   Clock clock = {{0,0,0}};
-
+void process0(fila *f){
+   
+   Clock clock;
+   clock.p[0]=0;
+   clock.p[1]=0;
+   clock.p[2]=0;
+   
+   pthread_t t1, t2;
+    
+   sem_init(&seminserir, 0, 0);
+   sem_init(&semretirar, 0, 0);
+   
+   fila *f_emissor=malloc(sizeof(fila));
+   inicializar(f_emissor);
+   
+   fila *f_receptor=malloc(sizeof(fila));
+   inicializar(f_receptor);
+   
+   pthread_create(&t1, NULL, Emissor, (void*) f_emissor);  
+   pthread_create(&t2, NULL, Receptor, (void*) f_receptor);  
+     
+   f->clocks[f->inicio]
    printf("Process: %d, Clock: (%d, %d, %d)\n", 0, clock.p[0], clock.p[1], clock.p[2]);
    Event(0, &clock);
    printf("Process: %d, Clock: (%d, %d, %d)\n", 0, clock.p[0], clock.p[1], clock.p[2]);
-   Send(0,1,&clock);
+   inserir(f_emissor);
+   //Send(0,1,&clock);
    printf("Process: %d, Clock: (%d, %d, %d)\n", 0, clock.p[0], clock.p[1], clock.p[2]);
-   Receive(0,1,&clock);
+   retirar(f_receptor);
+   //Receive(0,1,&clock);
+   //muda o resto tbm dps
    printf("Process: %d, Clock: (%d, %d, %d)\n", 0, clock.p[0], clock.p[1], clock.p[2]);
    Send(0,2,&clock);
    printf("Process: %d, Clock: (%d, %d, %d)\n", 0, clock.p[0], clock.p[1], clock.p[2]);
@@ -112,6 +158,10 @@ void process0(){
    printf("Process: %d, Clock: (%d, %d, %d)\n", 0, clock.p[0], clock.p[1], clock.p[2]);
    Event(0, &clock);
    printf("Process: %d, Clock: (%d, %d, %d)\n", 0, clock.p[0], clock.p[1], clock.p[2]);
+   
+   pthread_join(t1, NULL); 
+   pthread_join(t2, NULL); 
+
 }
 
 // Representa o processo de rank 1
@@ -139,7 +189,9 @@ void process2(){
 }
 
 int main(void) {
-   int my_rank;               
+   int my_rank;    
+   
+   
 
    MPI_Init(NULL, NULL); 
    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank); 
