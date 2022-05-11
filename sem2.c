@@ -17,7 +17,7 @@ sem_t seminserir;
 sem_t semretirar;
 
 #define MAX 50
-#define TAMANHOFILA 3
+#define TAMANHOFILA 10
 
 typedef struct 
 {
@@ -68,7 +68,7 @@ bool vazia (fila *f)
     }
 }
 
-bool inserir(Clock clock, fila *f)
+bool inserir(Clock *clock, fila *f)
 {
     
     pthread_mutex_lock(&mutex);
@@ -78,13 +78,13 @@ bool inserir(Clock clock, fila *f)
         pthread_cond_wait(&condFull, &mutex);
     }
     if (vazia(f)){
-        f->clocks[f->inicio] = clock;
+        f->clocks[f->inicio] = *clock;
         f->tam=1;
         pthread_mutex_unlock(&mutex);
         pthread_cond_signal(&condEmpty);
     }else{
         f->fim = (f->fim + 1);
-        f->clocks[f->fim] = clock;
+        f->clocks[f->fim] = *clock;
         f->tam++;
         pthread_mutex_unlock(&mutex);
         pthread_cond_signal(&condEmpty);
@@ -99,7 +99,7 @@ void imprimir(fila *q)
 }
 
 
-Clock retirar(fila *f)
+Clock* retirar(fila *f)
 {
     Clock c;
     while(vazia(f))
@@ -114,8 +114,9 @@ Clock retirar(fila *f)
         f->inicio = (f->inicio + 1);
         f->tam--;
     pthread_cond_signal(&condFull);
-    return c;
+    return &c;
 }
+/*
 void *criarthread (void* f){
     Clock c1;
     c1.p[0]=1;c1.p[1]=1;c1.p[2]=1;
@@ -138,8 +139,8 @@ void *removerthread (void* f){
     //retirar((fila*)f);
     return NULL;
 }
-
-
+*/
+/*
 //remover esse main 
 int main(void)
 {
@@ -163,3 +164,4 @@ int main(void)
   pthread_mutex_destroy(&mutex);
 
 }
+*/

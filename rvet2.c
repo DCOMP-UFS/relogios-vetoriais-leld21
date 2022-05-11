@@ -12,41 +12,39 @@
 #include <stdio.h>
 #include <string.h>  
 #include <mpi.h>     
-#include "sem.c"
 #include <string.h>
 #include <pthread.h>
 #include <stdbool.h>
 #include <semaphore.h>
+#include "sem2.c"
 
-
-/*
-typedef struct Clock { 
-   int p[3];
-} Clock;
-
-*/
-void Event(int pid, fila *f){
-   f->clocks[f->inicio].p[pid]++;
-}
-
-void *Emissor (void* f){
-   Event((fila*)f);
-   Clock c = retirar((fila*)f);
-   MPI_Send(c.p,3,MPI_INT,c.destination,0,MPI_COMM_WORLD);
-}
-
-void *Receptor (void* f){
-   //ainda ta igual ao receive, ainda n sei como fazer, so que tem que colocar um inserir ai no meio.
-   int antigo0 = clock->p[0];
-   int antigo1 = clock->p[1];
-   int antigo2 = clock->p[2];
-   
-   MPI_Recv(clock->p, 3, MPI_INT, pidS, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-   comparaClocks(clock,antigo0,antigo1,antigo2);
+void Event(int pid, Clock *clock){
    clock->p[pid]++;
 }
 
+void *Emissor (void* f){
+   Clock *c = retirar((fila*)f);
+   c->p[c->pid]++;
+   MPI_Send(c->p,3,MPI_INT,c->destination,0,MPI_COMM_WORLD);
+}
 
+/*
+void *Receptor (void* f){
+   Clock clock1=((fila*)f)->clock;
+   //ainda ta igual ao receive, ainda n sei como fazer, so que tem que colocar um inserir ai no meio.
+   int antigo0 = ((fila*)f)->clock.p[0];
+   int antigo1 = ((fila*)f)->clock.p[1];
+   int antigo2 = ((fila*)f)->clock.p[2];
+   
+   MPI_Recv(((fila*)f)->clock.p[0];->clock.p, 3, MPI_INT, pidS, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+   //comparaClocks(clock,antigo0,antigo1,antigo2);
+   ((fila*)f)->clock.p[((fila*)f)->clock.pid];
+}
+*/
+
+
+
+/*
 void Send(int pid, int pidR,  Clock *clock){
    clock->p[pid]++;
    MPI_Send(clock->p,3,MPI_INT,pidR,0,MPI_COMM_WORLD);
@@ -54,33 +52,6 @@ void Send(int pid, int pidR,  Clock *clock){
 
 void comparaClocks(Clock *clock,int p0, int p1, int p2 )
 {
-   /*
-     if (p0 == 0)
-    {
-        if (clock->p[1] >= p0)
-            clock->p[1] = p0;
-
-        if (clock->p[2] >= p0)
-            clock->p[2] = p0;
-    }
-    else if (p1 == 1)
-    {
-        if (clock->p[0] >=p1)
-            clock->p[0] = p1;
-
-        if (clock->p[2] >= p1)
-            clock->p[2] = p1;
-    }
-    else if (p2 == 2)
-    {
-        if (clock->p[0] >= p2)
-            clock->p[0] = p2;
-
-        if (clock->p[1] >= p2)
-            clock->p[1] = p2;
-    }
-   */
-   
    if(clock->p[0]<=p0){
       clock->p[0]=p0;
    }
@@ -101,24 +72,12 @@ void Receive(int pid, int pidS,  Clock *clock){
 
 
    MPI_Recv(clock->p, 3, MPI_INT, pidS, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-   
-   /*
-   if(clock->p[0]<=antigo0){
-      clock->p[0]=antigo0;
-   }
-   if(clock->p[1]<=antigo1){
-      clock->p[1]=antigo1;
-   }
-   if(clock->p[2]<=antigo2){
-      clock->p[2]=antigo2;
-   }
-  */
    comparaClocks(clock,antigo0,antigo1,antigo2);
    clock->p[pid]++;
 }
-
+*/
 // Representa o processo de rank 0
-void process0(fila *f){
+void process0(){
    
    Clock clock;
    clock.p[0]=0;
@@ -126,29 +85,27 @@ void process0(fila *f){
    clock.p[2]=0;
    
    pthread_t t1, t2;
-    
-   sem_init(&seminserir, 0, 0);
-   sem_init(&semretirar, 0, 0);
    
    fila *f_emissor=malloc(sizeof(fila));
    inicializar(f_emissor);
    
-   fila *f_receptor=malloc(sizeof(fila));
+   /*fila *f_receptor=malloc(sizeof(fila));
    inicializar(f_receptor);
-   
+   */
    pthread_create(&t1, NULL, Emissor, (void*) f_emissor);  
-   pthread_create(&t2, NULL, Receptor, (void*) f_receptor);  
-     
-   f->clocks[f->inicio]
+   //pthread_create(&t2, NULL, Receptor, (void*) f_receptor);  
    printf("Process: %d, Clock: (%d, %d, %d)\n", 0, clock.p[0], clock.p[1], clock.p[2]);
    Event(0, &clock);
    printf("Process: %d, Clock: (%d, %d, %d)\n", 0, clock.p[0], clock.p[1], clock.p[2]);
-   inserir(f_emissor);
+   clock.pid=0;
+   clock.destination=1;
+   inserir(&clock,f_emissor);
    //Send(0,1,&clock);
    printf("Process: %d, Clock: (%d, %d, %d)\n", 0, clock.p[0], clock.p[1], clock.p[2]);
-   retirar(f_receptor);
+   //retirar(f_receptor);
    //Receive(0,1,&clock);
    //muda o resto tbm dps
+   /*
    printf("Process: %d, Clock: (%d, %d, %d)\n", 0, clock.p[0], clock.p[1], clock.p[2]);
    Send(0,2,&clock);
    printf("Process: %d, Clock: (%d, %d, %d)\n", 0, clock.p[0], clock.p[1], clock.p[2]);
@@ -158,15 +115,18 @@ void process0(fila *f){
    printf("Process: %d, Clock: (%d, %d, %d)\n", 0, clock.p[0], clock.p[1], clock.p[2]);
    Event(0, &clock);
    printf("Process: %d, Clock: (%d, %d, %d)\n", 0, clock.p[0], clock.p[1], clock.p[2]);
-   
+   */
    pthread_join(t1, NULL); 
-   pthread_join(t2, NULL); 
+   //pthread_join(t2, NULL); 
 
 }
-
+/*
 // Representa o processo de rank 1
 void process1(){
-   Clock clock = {{0,0,0}};
+   Clock clock;
+   clock.p[0]=0;
+   clock.p[1]=0;
+   clock.p[2]=0;
    printf("Process: %d, Clock: (%d, %d, %d)\n", 1, clock.p[0], clock.p[1], clock.p[2]);
    Send(1,0,&clock);
    printf("Process: %d, Clock: (%d, %d, %d)\n", 1, clock.p[0], clock.p[1], clock.p[2]);
@@ -178,7 +138,10 @@ void process1(){
 
 // Representa o processo de rank 2
 void process2(){
-   Clock clock = {{0,0,0}};
+   Clock clock;
+   clock.p[0]=0;
+   clock.p[1]=0;
+   clock.p[2]=0;
    printf("Process: %d, Clock: (%d, %d, %d)\n", 2, clock.p[0], clock.p[1], clock.p[2]);
    Event(2, &clock);
    printf("Process: %d, Clock: (%d, %d, %d)\n", 2, clock.p[0], clock.p[1], clock.p[2]);
@@ -187,11 +150,11 @@ void process2(){
    Receive(2,0,&clock);
    printf("Process: %d, Clock: (%d, %d, %d)\n", 2, clock.p[0], clock.p[1], clock.p[2]);
 }
-
+*/
 int main(void) {
    int my_rank;    
    
-   
+   pthread_mutex_init(&mutex, NULL);
 
    MPI_Init(NULL, NULL); 
    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank); 
@@ -199,13 +162,16 @@ int main(void) {
    if (my_rank == 0) { 
       process0();
    } else if (my_rank == 1) {  
-      process1();
+      //process1();
    } else if (my_rank == 2) {  
-      process2();
+      //process2();
    }
+   
+   pthread_mutex_destroy(&mutex);
 
    /* Finaliza MPI */
    MPI_Finalize(); 
 
+   
    return 0;
 }  /* main */
