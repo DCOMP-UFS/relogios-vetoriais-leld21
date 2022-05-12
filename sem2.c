@@ -4,8 +4,6 @@
 #include <pthread.h>
 #include <stdbool.h>
 #include <semaphore.h>
-#include <time.h>
-#include <unistd.h>
 
 pthread_mutex_t mutex;
 
@@ -28,7 +26,7 @@ typedef struct
 
 typedef struct
 {
-   Clock clocks[MAX];
+   Clock *clocks[MAX];
    int inicio;
    int fim;
    int tam;
@@ -37,7 +35,6 @@ typedef struct
 void inicializar(fila *f)
 {
     f->inicio = 0;
-    //f->clocks[inicio].p={0,0,0};
     f->fim = 0;
     f->tam = 0;
 }
@@ -68,23 +65,25 @@ bool vazia (fila *f)
     }
 }
 
-bool inserir(Clock *clock, fila *f)
+bool inserir(Clock *clock, fila *f,int pid)
 {
     
     pthread_mutex_lock(&mutex);
     while(cheia(f))
     {
-        printf("Fila cheia\n");
+        //printf("Fila cheia\n");
         pthread_cond_wait(&condFull, &mutex);
     }
     if (vazia(f)){
-        f->clocks[f->inicio] = *clock;
+        clock->p[pid]++;
+        f->clocks[f->inicio] = clock;
         f->tam=1;
         pthread_mutex_unlock(&mutex);
         pthread_cond_signal(&condEmpty);
     }else{
+        clock->p[pid]++;
         f->fim = (f->fim + 1);
-        f->clocks[f->fim] = *clock;
+        f->clocks[f->fim] = clock;
         f->tam++;
         pthread_mutex_unlock(&mutex);
         pthread_cond_signal(&condEmpty);
@@ -101,20 +100,19 @@ void imprimir(fila *q)
 
 Clock* retirar(fila *f)
 {
-    Clock c;
+    Clock *c;
     while(vazia(f))
     {
-        printf("Fila Vazia\n");
+        //printf("Fila Vazia\n");
         pthread_cond_wait(&condEmpty, &mutex);
         
         
     }
         c=f->clocks[f->inicio];
-        printf("Process: %d, Clock: (%d, %d, %d)\n", 2, f->clocks[f->inicio].p[0], f->clocks[f->inicio].p[1], f->clocks[f->inicio].p[2]);
         f->inicio = (f->inicio + 1);
         f->tam--;
     pthread_cond_signal(&condFull);
-    return &c;
+    return c;
 }
 /*
 void *criarthread (void* f){
