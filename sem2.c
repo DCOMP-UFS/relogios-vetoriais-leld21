@@ -5,17 +5,17 @@
 #include <stdbool.h>
 #include <semaphore.h>
 
-pthread_mutex_t mutex;
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 
-pthread_cond_t condFull;
-pthread_cond_t condEmpty;
+pthread_cond_t condFull= PTHREAD_COND_INITIALIZER;
+pthread_cond_t condEmpty= PTHREAD_COND_INITIALIZER;
 
 sem_t seminserir;
 sem_t semretirar;
 
-#define MAX 50
-#define TAMANHOFILA 10
+#define MAX 500
+#define TAMANHOFILA 100
 
 typedef struct 
 {
@@ -35,7 +35,7 @@ typedef struct
 void inicializar(fila *f)
 {
     f->inicio = 0;
-    f->fim = 0;
+    f->fim = -1;
     f->tam = 0;
 }
 
@@ -71,9 +71,10 @@ bool inserir(Clock *clock, fila *f,int pid)
     pthread_mutex_lock(&mutex);
     while(cheia(f))
     {
-        //printf("Fila cheia\n");
+        printf("Fila cheia\n");
         pthread_cond_wait(&condFull, &mutex);
     }
+    /*
     if (vazia(f)){
         clock->p[pid]++;
         f->clocks[f->inicio] = clock;
@@ -81,14 +82,15 @@ bool inserir(Clock *clock, fila *f,int pid)
         pthread_mutex_unlock(&mutex);
         pthread_cond_signal(&condEmpty);
     }else{
+    */
         clock->p[pid]++;
-        f->fim = (f->fim + 1);
+        f->fim = (f->fim + 1)% TAMANHOFILA;;
         f->clocks[f->fim] = clock;
         f->tam++;
         pthread_mutex_unlock(&mutex);
         pthread_cond_signal(&condEmpty);
-    }
-    return true;
+//}
+return true;
 }
 
 void imprimir(fila *q)
@@ -98,68 +100,19 @@ void imprimir(fila *q)
 }
 
 
-Clock* retirar(fila *f)
+Clock* retirar(fila *f,int pid)
 {
     Clock *c;
     while(vazia(f))
     {
-        //printf("Fila Vazia\n");
+        printf("Fila Vazia devido a %d\n", pid);
         pthread_cond_wait(&condEmpty, &mutex);
         
         
     }
         c=f->clocks[f->inicio];
-        f->inicio = (f->inicio + 1);
+        f->inicio = (f->inicio + 1)% TAMANHOFILA;;
         f->tam--;
     pthread_cond_signal(&condFull);
     return c;
 }
-/*
-void *criarthread (void* f){
-    Clock c1;
-    c1.p[0]=1;c1.p[1]=1;c1.p[2]=1;
-    inserir(c1,(fila*)f);
-    c1.p[0]=2;c1.p[1]=2;c1.p[2]=2;
-    inserir(c1,(fila*)f);
-    c1.p[0]=3;c1.p[1]=3;c1.p[2]=3;
-    inserir(c1,(fila*)f);
-    c1.p[0]=4;c1.p[1]=4;c1.p[2]=4;
-    inserir(c1,(fila*)f);
-    //inserir(c1,(fila*)f);
-    return NULL;
-}
- 
-void *removerthread (void* f){
-    retirar((fila*)f);
-    retirar((fila*)f);
-    retirar((fila*)f);
-    retirar((fila*)f);
-    //retirar((fila*)f);
-    return NULL;
-}
-*/
-/*
-//remover esse main 
-int main(void)
-{
-    
-  pthread_t t1, t2;
-  
-  pthread_mutex_init(&mutex, NULL);
-    
-  //sem_init(&seminserir, 0, 0);
-  //sem_init(&semretirar, 0, 0);
- 
-  fila *f=malloc(sizeof(fila));
-  inicializar(f);
-  
-  pthread_create(&t1, NULL, criarthread, (void*) f);  
-  pthread_create(&t2, NULL, removerthread, (void*) f);  
-  
-  pthread_join(t1, NULL); 
-  pthread_join(t2, NULL);
-  
-  pthread_mutex_destroy(&mutex);
-
-}
-*/
