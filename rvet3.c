@@ -100,18 +100,22 @@ void Event(int pid, Clock *clockt){
 }
 
 void *Emissor (){
+   while(1){
    Clock c = consumer1();
    MPI_Send(c.p,3,MPI_INT,c.destination,0,MPI_COMM_WORLD);
+    }
 }
 
 void *Receptor (){
-    Clock clock;
+   while(1){
+   Clock clock=clock1;
    int antigo0 = clock1.p[0];
    int antigo1 = clock1.p[1];
    int antigo2 = clock1.p[2];
    MPI_Recv(clock.p, 3, MPI_INT, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
    comparaClocks(&clock,antigo0,antigo1,antigo2);
    producer2(clock);
+   }
 }
 
 
@@ -163,7 +167,7 @@ void process0(){
    
    printf("Process: %d, Clock: (%d, %d, %d)\n", 0, clock1.p[0], clock1.p[1], clock1.p[2]);
    
-
+    
    clock1=consumer2();
    Event(pid, &clock1);
    
@@ -198,6 +202,9 @@ void process0(){
     pthread_mutex_destroy(&mutex);
     sem_destroy(&empty);
     sem_destroy(&full);
+    pthread_mutex_destroy(&mutex1);
+    sem_destroy(&empty1);
+    sem_destroy(&full1); 
 
 }
 void process1(){
@@ -244,6 +251,9 @@ void process1(){
     pthread_mutex_destroy(&mutex);
     sem_destroy(&empty);
     sem_destroy(&full);
+        pthread_mutex_destroy(&mutex1);
+    sem_destroy(&empty1);
+    sem_destroy(&full1); 
 }
 
 // Representa o processo de rank 2
@@ -291,6 +301,9 @@ void process2(){
     pthread_mutex_destroy(&mutex);
     sem_destroy(&empty);
     sem_destroy(&full); 
+    pthread_mutex_destroy(&mutex1);
+    sem_destroy(&empty1);
+    sem_destroy(&full1); 
 }
 
 
