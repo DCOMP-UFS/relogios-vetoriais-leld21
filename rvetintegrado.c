@@ -5,8 +5,8 @@
  * 
  * https://people.cs.rutgers.edu/~pxk/417/notes/images/clocks-vector.png
  * 
- * Compilação: mpicc -o rvet rvet.c
- * Execução:   mpiexec -n 3 ./rvet
+ * Compilação: mpicc -o rvetintegrado rvetintegrado.c
+ * Execução:   mpiexec -n 3 ./rvetintegrado
  */
  
 #include <stdio.h>
